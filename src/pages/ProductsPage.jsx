@@ -16,7 +16,7 @@ function Products() {
         return res.json();
       })
       .then(data => {
-        console.log("API DATA:", data); // 👈 DEBUG
+        console.log("API DATA:", data);
         setProducts(data);
         setLoading(false);
       })
