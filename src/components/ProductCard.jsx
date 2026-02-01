@@ -1,4 +1,34 @@
+import { useNavigate } from "react-router-dom";
+import { getAuthUser } from "../services/auth";
+
 function ProductCard({ product }) {
+  const navigate = useNavigate();
+
+  const handleBuy = async () => {
+    const user = await getAuthUser();
+
+    // 🔒 Not logged in
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    // 🚫 Logged in but not a customer
+    if (user.role !== "customer") {
+      alert("Only customers are allowed to buy products.");
+      return;
+    }
+
+    // ✅ Customer → continue to checkout (next step)
+    console.log("Proceed to checkout for:", product.productId);
+    // navigate(`/checkout/${product.productId}`);
+  };
+
+  const handleView = () => {
+    console.log("View product:", product.productId);
+    // navigate(`/product/${product.productId}`);
+  };
+
   return (
     <div
       style={{
@@ -25,10 +55,14 @@ function ProductCard({ product }) {
       <strong>Rs. {product.price}</strong>
 
       <div style={{ marginTop: "12px" }}>
-        <button style={{ marginRight: "10px" }}>
+        <button
+          style={{ marginRight: "10px" }}
+          onClick={handleView}
+        >
           View
         </button>
-        <button>
+
+        <button onClick={handleBuy}>
           Buy
         </button>
       </div>
