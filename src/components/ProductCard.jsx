@@ -1,42 +1,87 @@
 import { useNavigate } from "react-router-dom";
-import { getAuthUser } from "../services/auth";
+import { getAuthUser, getAuthSession } from "../services/auth";
 
 function ProductCard({ product }) {
   const navigate = useNavigate();
+  const outOfStock = product.availableStock === 0;
 
-  const handleBuy = async () => {
+  const handleAddToCart = async () => {
+    // 🔐 Check login
     const user = await getAuthUser();
-
-    // 🔒 Not logged in
     if (!user) {
       navigate("/login");
       return;
     }
 
-    // 🚫 Logged in but not a customer
     if (user.role !== "customer") {
-      alert("Only customers are allowed to buy products.");
+      alert("Only customers can add items to cart.");
       return;
     }
 
-    // ✅ Customer → continue to checkout (next step)
-    console.log("Proceed to checkout for:", product.productId);
-    // navigate(`/checkout/${product.productId}`);
-  };
+    if (outOfStock) {
+      alert("Product is out of stock.");
+      return;
+    }
 
-  const handleView = () => {
-    console.log("View product:", product.productId);
-    // navigate(`/product/${product.productId}`);
+    // 🧮 Ask quantity
+    const qtyInput = prompt(
+      `Enter quantity (Available: ${product.availableStock})`,
+      "1"
+    );
+
+    if (!qtyInput) return;
+
+    const qty = parseInt(qtyInput, 10);
+    if (isNaN(qty) || qty <= 0) {
+      alert("Invalid quantity");
+      return;
+    }
+
+    // 🔑 Get Cognito access token
+    const session = await getAuthSession();
+    const token = session?.accessToken?.toString();
+
+    try {
+      const res = await fetch(
+        `https://sxw967m5i6.execute-api.eu-north-1.amazonaws.com/dev/cart/add`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            productId: product.productId,
+            qty
+          })
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Failed to add to cart");
+        return;
+      }
+
+      alert("Item added to cart ✅");
+      console.log("Cart response:", data);
+
+    } catch (err) {
+      console.error("Add to cart error:", err);
+      alert("Something went wrong");
+    }
   };
 
   return (
     <div
       style={{
         backgroundColor: "#fff",
-        color: "#000",
-        borderRadius: "10px",
+        borderRadius: "12px",
         padding: "15px",
-        boxShadow: "0 4px 10px rgba(0,0,0,0.2)"
+        boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+        display: "flex",
+        flexDirection: "column"
       }}
     >
       <img
@@ -46,26 +91,39 @@ function ProductCard({ product }) {
           width: "100%",
           height: "180px",
           objectFit: "cover",
-          borderRadius: "8px"
+          borderRadius: "8px",
+          marginBottom: "10px"
         }}
       />
 
       <h3>{product.name}</h3>
-      <p>{product.description}</p>
+      <p style={{ color: "#666" }}>Category: {product.category}</p>
       <strong>Rs. {product.price}</strong>
 
-      <div style={{ marginTop: "12px" }}>
-        <button
-          style={{ marginRight: "10px" }}
-          onClick={handleView}
-        >
-          View
-        </button>
+      <p
+        style={{
+          color: outOfStock ? "red" : "green",
+          fontSize: "14px"
+        }}
+      >
+        {outOfStock
+          ? "Out of stock"
+          : `Available: ${product.availableStock}`}
+      </p>
 
-        <button onClick={handleBuy}>
-          Buy
-        </button>
-      </div>
+      <button
+        style={{
+          marginTop: "auto",
+          backgroundColor: outOfStock ? "#ccc" : "#096B68",
+          color: "#fff",
+          padding: "8px",
+          cursor: outOfStock ? "not-allowed" : "pointer"
+        }}
+        disabled={outOfStock}
+        onClick={handleAddToCart}
+      >
+        Add to Cart
+      </button>
     </div>
   );
 }
