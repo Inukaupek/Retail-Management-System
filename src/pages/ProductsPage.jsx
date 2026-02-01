@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import ProductCard from "../components/ProductCard.jsx";
 
-const API_URL = `${import.meta.env.VITE_API_BASE_URL}/products`;
+// const API_URL = `${import.meta.env.VITE_API_BASE_URL}/products`;
+const API_URL = `https://sxw967m5i6.execute-api.eu-north-1.amazonaws.com/dev/products`;
 
 function Products() {
   const [products, setProducts] = useState([]);
