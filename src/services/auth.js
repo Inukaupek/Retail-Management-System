@@ -1,25 +1,51 @@
-import { fetchAuthSession } from "aws-amplify/auth";
+import { getCurrentUser, fetchAuthSession, signOut } from "aws-amplify/auth";
 
-export async function getAuthUser() {
+/**
+ * Get authenticated user + role
+ * Used in Navbar, protected actions
+ */
+export const getAuthUser = async () => {
   try {
-    const session = await fetchAuthSession();
+    // 🔥 Ensure user exists
+    const user = await getCurrentUser();
+
+    // 🔥 Force session hydration (important!)
+    const session = await fetchAuthSession({ forceRefresh: true });
+
     const idToken = session.tokens?.idToken;
+    const accessToken = session.tokens?.accessToken;
 
     if (!idToken) return null;
 
     const payload = idToken.payload;
 
     return {
+      userId: payload.sub,
       email: payload.email,
-      role: payload["custom:role"],
-      sub: payload.sub
+      role: payload["custom:role"] || "customer",
+      idToken: idToken.toString(),
+      accessToken: accessToken?.toString()
     };
-  } catch {
+  } catch (err) {
     return null;
   }
-}
+};
 
-export async function isLoggedIn() {
-  const user = await getAuthUser();
-  return !!user;
-}
+/**
+ * Simple auth check
+ */
+export const isAuthenticated = async () => {
+  try {
+    await getCurrentUser();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Logout
+ */
+export const logout = async () => {
+  await signOut();
+};
