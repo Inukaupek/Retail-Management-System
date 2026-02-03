@@ -1,29 +1,36 @@
 import { useState } from "react";
-import { signIn } from "aws-amplify/auth";
+import { signUp } from "aws-amplify/auth";
 import { useNavigate } from "react-router-dom";
 
-export default function Login() {
+export default function Register() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      await signIn({
+      await signUp({
         username: email,
         password,
+        options: {
+          userAttributes: {
+            email,
+            name,
+            phone_number: phone, // +94XXXXXXXXX
+          },
+        },
       });
-      navigate("/");
+
+      navigate("/confirm", { state: { email } });
     } catch (err) {
-      if (err.name === "UserNotConfirmedException") {
-        setError("Please verify your email before logging in");
-      } else {
-        setError("Invalid email or password");
-      }
+      console.error(err);
+      setError(err.message || "Registration failed");
     }
   };
 
@@ -38,13 +45,13 @@ export default function Login() {
       }}
     >
       <form
-        onSubmit={handleLogin}
+        onSubmit={handleRegister}
         style={{
           background: "#ffffff",
           padding: "40px",
           borderRadius: "14px",
-          width: "360px",
-          boxShadow: "0 12px 30px rgba(0,0,0,0.12)", // ✅ stronger shadow
+          width: "380px",
+          boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
         }}
       >
         <h2
@@ -54,7 +61,7 @@ export default function Login() {
             color: "#233D4D",
           }}
         >
-          Welcome Back
+          Create Account
         </h2>
 
         <p
@@ -65,7 +72,7 @@ export default function Login() {
             color: "#6b7280",
           }}
         >
-          Login to continue
+          Sign up to get started
         </p>
 
         {error && (
@@ -85,6 +92,25 @@ export default function Login() {
         )}
 
         <label style={{ fontSize: "14px", color: "#233D4D" }}>
+          Full Name
+        </label>
+        <input
+          type="text"
+          placeholder="John Doe"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginTop: "6px",
+            marginBottom: "14px",
+            borderRadius: "8px",
+            border: "1px solid #d1d5db",
+          }}
+        />
+
+        <label style={{ fontSize: "14px", color: "#233D4D" }}>
           Email
         </label>
         <input
@@ -92,6 +118,25 @@ export default function Login() {
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginTop: "6px",
+            marginBottom: "14px",
+            borderRadius: "8px",
+            border: "1px solid #d1d5db",
+          }}
+        />
+
+        <label style={{ fontSize: "14px", color: "#233D4D" }}>
+          Contact Number
+        </label>
+        <input
+          type="text"
+          placeholder="+94XXXXXXXXX"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
           required
           style={{
             width: "100%",
@@ -136,7 +181,7 @@ export default function Login() {
             cursor: "pointer",
           }}
         >
-          Login
+          Create Account
         </button>
 
         <p
@@ -147,16 +192,16 @@ export default function Login() {
             color: "#233D4D",
           }}
         >
-          Don’t have an account?{" "}
+          Already have an account?{" "}
           <span
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/login")}
             style={{
-              color: "#FE7F2D", // ✅ accent orange
+              color: "#FE7F2D",
               cursor: "pointer",
               fontWeight: "600",
             }}
           >
-            Sign up
+            Login
           </span>
         </p>
       </form>

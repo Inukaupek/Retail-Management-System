@@ -1,29 +1,31 @@
 import { useState } from "react";
-import { signIn } from "aws-amplify/auth";
-import { useNavigate } from "react-router-dom";
+import { confirmSignUp } from "aws-amplify/auth";
+import { useLocation, useNavigate } from "react-router-dom";
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+export default function ConfirmSignup() {
+  const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const email = location.state?.email || "";
+
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+
+  const handleConfirm = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      await signIn({
+      await confirmSignUp({
         username: email,
-        password,
+        confirmationCode: code,
       });
-      navigate("/");
+
+      // confirmed → go to login
+      navigate("/login");
     } catch (err) {
-      if (err.name === "UserNotConfirmedException") {
-        setError("Please verify your email before logging in");
-      } else {
-        setError("Invalid email or password");
-      }
+      console.error(err);
+      setError("Invalid or expired verification code");
     }
   };
 
@@ -34,17 +36,17 @@ export default function Login() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "#ffffff", // ✅ white background
+        background: "#ffffff", // same as login
       }}
     >
       <form
-        onSubmit={handleLogin}
+        onSubmit={handleConfirm}
         style={{
           background: "#ffffff",
           padding: "40px",
           borderRadius: "14px",
           width: "360px",
-          boxShadow: "0 12px 30px rgba(0,0,0,0.12)", // ✅ stronger shadow
+          boxShadow: "0 12px 30px rgba(0,0,0,0.12)",
         }}
       >
         <h2
@@ -54,7 +56,7 @@ export default function Login() {
             color: "#233D4D",
           }}
         >
-          Welcome Back
+          Verify Email
         </h2>
 
         <p
@@ -65,7 +67,9 @@ export default function Login() {
             color: "#6b7280",
           }}
         >
-          Login to continue
+          Enter the verification code sent to
+          <br />
+          <b>{email}</b>
         </p>
 
         {error && (
@@ -85,32 +89,13 @@ export default function Login() {
         )}
 
         <label style={{ fontSize: "14px", color: "#233D4D" }}>
-          Email
+          Verification Code
         </label>
         <input
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginTop: "6px",
-            marginBottom: "14px",
-            borderRadius: "8px",
-            border: "1px solid #d1d5db",
-          }}
-        />
-
-        <label style={{ fontSize: "14px", color: "#233D4D" }}>
-          Password
-        </label>
-        <input
-          type="password"
-          placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          type="text"
+          placeholder="Enter code"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
           required
           style={{
             width: "100%",
@@ -127,7 +112,7 @@ export default function Login() {
           style={{
             width: "100%",
             padding: "12px",
-            background: "#215E61", // ✅ brand teal
+            background: "#215E61", // brand teal
             border: "none",
             color: "#ffffff",
             borderRadius: "10px",
@@ -136,7 +121,7 @@ export default function Login() {
             cursor: "pointer",
           }}
         >
-          Login
+          Confirm Email
         </button>
 
         <p
@@ -147,16 +132,16 @@ export default function Login() {
             color: "#233D4D",
           }}
         >
-          Don’t have an account?{" "}
+          Already verified?{" "}
           <span
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/login")}
             style={{
-              color: "#FE7F2D", // ✅ accent orange
+              color: "#FE7F2D", // accent orange
               cursor: "pointer",
               fontWeight: "600",
             }}
           >
-            Sign up
+            Login
           </span>
         </p>
       </form>
