@@ -1,48 +1,88 @@
-import "../styles/Login.css";
+import { useState } from "react";
+import { signIn } from "aws-amplify/auth";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const handleSubmit = (e) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // API call will be added later
-    alert("Login clicked (API coming next 🚀)");
+    setError("");
+
+    try {
+      await signIn({
+        username: email,   // email = username
+        password,
+      });
+
+      // ✅ login success
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      setError("Invalid email or password");
+    }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <h2>Welcome Back</h2>
-        <p className="subtitle">Sign in to continue</p>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#111",
+      }}
+    >
+      <form
+        onSubmit={handleLogin}
+        style={{
+          background: "#fff",
+          padding: "30px",
+          borderRadius: "10px",
+          width: "320px",
+        }}
+      >
+        <h2 style={{ marginBottom: "20px" }}>Login</h2>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              required
-            />
-          </div>
+        {error && (
+          <p style={{ color: "red", marginBottom: "10px" }}>{error}</p>
+        )}
 
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              required
-            />
-          </div>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={{ width: "100%", marginBottom: "10px", padding: "8px" }}
+        />
 
-          <button type="submit" className="login-btn">
-            Login
-          </button>
-        </form>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          style={{ width: "100%", marginBottom: "15px", padding: "8px" }}
+        />
 
-        <div className="login-footer">
-          <a href="#">Forgot password?</a>
-          <span> | </span>
-          <a href="#">Create account</a>
-        </div>
-      </div>
+        <button
+          type="submit"
+          style={{
+            width: "100%",
+            padding: "10px",
+            background: "#ff9800",
+            border: "none",
+            color: "#fff",
+            borderRadius: "6px",
+          }}
+        >
+          Login
+        </button>
+      </form>
     </div>
   );
 }
