@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -38,6 +37,7 @@ export default function Checkout() {
 
   const [placing, setPlacing] = useState(false);
   const [timer, setTimer] = useState(5);
+  const [addressError, setAddressError] = useState("");
 
   /* ---------------- LOAD DATA ---------------- */
   useEffect(() => {
@@ -89,11 +89,13 @@ export default function Checkout() {
   /* ---------------- PLACE ORDER ---------------- */
   async function handlePlaceOrder() {
     if (!selectedAddress) {
-      alert("Select an address");
+      setAddressError("Please select a delivery address to continue.");
       return;
     }
 
+    setAddressError("");
     setPlacing(true);
+
     let t = 5;
     setTimer(t);
 
@@ -108,19 +110,18 @@ export default function Checkout() {
   }
 
   async function submitOrder() {
-  const res = await placeOrder(selectedAddress);
+    const res = await placeOrder(selectedAddress);
 
-  navigate("/order-success", {
-    state: {
-      orderId: res.orderId,
-      cart,
-      total,
-      address: addresses.find(a => a.addressId === selectedAddress),
-      user
-    }
-  });
-}
-
+    navigate("/order-success", {
+      state: {
+        orderId: res.orderId,
+        cart,
+        total,
+        address: addresses.find(a => a.addressId === selectedAddress),
+        user
+      }
+    });
+  }
 
   if (!user) return <p style={{ padding: 20 }}>Loading...</p>;
 
@@ -177,13 +178,22 @@ export default function Checkout() {
                 <input
                   type="radio"
                   checked={selectedAddress === a.addressId}
-                  onChange={() => setSelectedAddress(a.addressId)}
+                  onChange={() => {
+                    setSelectedAddress(a.addressId);
+                    setAddressError("");
+                  }}
                 />
                 <span>
                   <b>{a.label}</b> — {a.line1}, {a.city}
                 </span>
               </label>
             ))}
+
+            {addressError && (
+              <p style={{ color: colors.accent, fontSize: 14 }}>
+                ⚠️ {addressError}
+              </p>
+            )}
 
             <button style={linkBtn} onClick={() => setShowAdd(!showAdd)}>
               + Add new address
@@ -209,13 +219,24 @@ export default function Checkout() {
 
           <div style={{ textAlign: "right", marginTop: 24 }}>
             {!placing ? (
-              <button style={primaryBtn} onClick={handlePlaceOrder}>
+              <button
+                style={{
+                  ...primaryBtn,
+                  opacity: selectedAddress ? 1 : 0.5,
+                  cursor: selectedAddress ? "pointer" : "not-allowed"
+                }}
+                disabled={!selectedAddress}
+                onClick={handlePlaceOrder}
+              >
                 Place Order
               </button>
             ) : (
               <p style={{ color: colors.accent }}>
                 Placing order in {timer}s…
-                <button style={linkBtn} onClick={() => window.location.reload()}>
+                <button
+                  style={linkBtn}
+                  onClick={() => window.location.reload()}
+                >
                   Cancel
                 </button>
               </p>
