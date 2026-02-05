@@ -116,7 +116,7 @@ function ProductCard({ product }) {
             gap: "6px"
           }}
         >
-          <i className="fas fa-rupee-sign"></i>
+          <i>Rs</i>
           {product.price}
         </strong>
 
